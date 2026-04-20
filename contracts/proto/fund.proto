@@ -1,0 +1,108 @@
+syntax = "proto3";
+
+package fund;
+
+service FundService {
+  rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse);
+  rpc Deposit(DepositRequest) returns (DepositResponse);
+  rpc Withdraw(WithdrawRequest) returns (WithdrawResponse);
+  rpc Freeze(FreezeRequest) returns (FreezeResponse);
+  rpc Unfreeze(UnfreezeRequest) returns (UnfreezeResponse);
+  rpc GetTransactions(GetTransactionsRequest) returns (GetTransactionsResponse);
+}
+
+// --- GetBalance ---
+message GetBalanceRequest {
+  string user_id = 1;
+  optional string currency = 2;
+}
+
+message GetBalanceResponse {
+  string user_id = 1;
+  string currency = 2;
+  int64 balance = 3;
+  int64 frozen_balance = 4;
+  int64 available_balance = 5;
+}
+
+// --- Deposit ---
+message DepositRequest {
+  string user_id = 1;
+  int64 amount = 2;
+  string currency = 3;
+  string remark = 4;
+}
+
+message DepositResponse {
+  string transaction_id = 1;
+  int64 balance_after = 2;
+}
+
+// --- Withdraw ---
+message WithdrawRequest {
+  string user_id = 1;
+  int64 amount = 2;
+  string currency = 3;
+  string remark = 4;
+}
+
+message WithdrawResponse {
+  string transaction_id = 1;
+  int64 balance_after = 2;
+}
+
+// --- Freeze ---
+message FreezeRequest {
+  string user_id = 1;
+  int64 amount = 2;
+  string currency = 3;
+  string order_id = 4;
+}
+
+message FreezeResponse {
+  string transaction_id = 1;
+  int64 frozen_balance_after = 2;
+  int64 available_balance_after = 3;
+}
+
+// --- Unfreeze ---
+message UnfreezeRequest {
+  string user_id = 1;
+  int64 amount = 2;
+  string currency = 3;
+  string order_id = 4;
+}
+
+message UnfreezeResponse {
+  string transaction_id = 1;
+  int64 frozen_balance_after = 2;
+  int64 available_balance_after = 3;
+}
+
+// --- GetTransactions ---
+message GetTransactionsRequest {
+  string user_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  optional string type_filter = 4;
+  optional string start_date = 5;
+  optional string end_date = 6;
+}
+
+message TransactionInfo {
+  string transaction_id = 1;
+  string type = 2;
+  int64 amount = 3;
+  int64 balance_before = 4;
+  int64 balance_after = 5;
+  optional string order_id = 6;
+  string remark = 7;
+  string created_at = 8;
+}
+
+message GetTransactionsResponse {
+  repeated TransactionInfo transactions = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}

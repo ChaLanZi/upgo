@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: auth-config
+  labels:
+    app: auth
+data:
+  GRPC_ADDR: "0.0.0.0:50052"
+  DATABASE_URL: "postgres://postgres:postgres@postgres:5432/upgo_auth"
+  NATS_URL: "nats://nats:4222"
+  SMTP_HOST: "mailpit"
+  SMTP_PORT: "1025"
+  SMTP_USERNAME: ""
+  SMTP_PASSWORD: ""
+  SMTP_FROM: "noreply@upgo.local"
+  LOG_LEVEL: "info"

@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package risk;
+
+service RiskService {
+  rpc CheckOrderRisk(CheckOrderRiskRequest) returns (CheckOrderRiskResponse);
+  rpc GetMarginRatio(GetMarginRatioRequest) returns (GetMarginRatioResponse);
+  rpc GetRiskEvents(GetRiskEventsRequest) returns (GetRiskEventsResponse);
+  rpc ReloadRules(ReloadRulesRequest) returns (ReloadRulesResponse);
+}
+
+// --- CheckOrderRisk ---
+message CheckOrderRiskRequest {
+  string user_id = 1;
+  string symbol = 2;
+  string direction = 3;
+  int64 order_quantity = 4;
+  int64 order_price = 5;
+}
+
+message CheckOrderRiskResponse {
+  bool allowed = 1;
+  repeated string warnings = 2;
+  optional string reject_reason = 3;
+}
+
+// --- GetMarginRatio ---
+message GetMarginRatioRequest {
+  string user_id = 1;
+}
+
+message GetMarginRatioResponse {
+  double margin_ratio = 1;
+  double warning_threshold = 2;
+  double liquidation_threshold = 3;
+  string level = 4;
+}
+
+// --- GetRiskEvents ---
+message GetRiskEventsRequest {
+  string user_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message RiskEventInfo {
+  string event_id = 1;
+  string rule_name = 2;
+  string condition = 3;
+  string action = 4;
+  string detail = 5;
+  string created_at = 6;
+}
+
+message GetRiskEventsResponse {
+  repeated RiskEventInfo events = 1;
+  int32 total = 2;
+}
+
+// --- ReloadRules ---
+message ReloadRulesRequest {
+  string admin_id = 1;
+}
+
+message ReloadRulesResponse {
+  string status = 1;
+  int32 rules_loaded = 2;
+}

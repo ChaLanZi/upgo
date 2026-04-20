@@ -1,0 +1,7 @@
+{
+  "name": "upgo-ci",
+  "sdk": "go",
+  "source": ".",
+  "engineVersion": "v0.21.4",
+  "description": "Dagger Go SDK pipeline blueprint. In environments without network access to Go module proxies, use 'dagger run sh -c' instead."
+}

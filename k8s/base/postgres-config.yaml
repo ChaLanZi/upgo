@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+  labels:
+    app: postgres
+data:
+  init.sql: |
+    -- upgo_account 数据库在 POSTGRES_DB 环境变量中自动创建
+    -- 此处可添加更多初始化 SQL
+
+    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

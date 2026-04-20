@@ -1,0 +1,56 @@
+[workspace]
+resolver = "2"
+members = [
+    "contracts",
+    "services/account",
+    "services/auth",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-opentelemetry = "0.28"
+opentelemetry = { version = "0.27", features = ["metrics"] }
+opentelemetry_sdk = { version = "0.27", features = ["rt-tokio"] }
+opentelemetry-otlp = { version = "0.27", features = ["grpc-tonic"] }
+thiserror = "2"
+anyhow = "1"
+prost = "0.13"
+tonic = "0.12"
+tonic-build = "0.12"
+axum = "0.8"
+sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "uuid", "chrono", "migrate"] }
+uuid = { version = "1", features = ["v7", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+async-nats = "0.38"
+async-trait = "0.1"
+futures = "0.3"
+testcontainers = { version = "0.23", features = [] }
+refinery = { version = "0.9", features = ["tokio-postgres"] }
+
+# ── Compilation profiles ────────────────────────────────────────
+[profile.dev]
+# Dev 编译优化：保持快速编译
+incremental = true
+
+[profile.release]
+# Release 编译优化：最小体积、最大运行时性能
+opt-level = 3                  # 最高优化等级
+lto = "fat"                   # 全量链接时优化
+codegen-units = 1              # 单代码单元，允许更多跨函数优化
+strip = "symbols"             # 移除调试符号，减小二进制体积
+panic = "abort"               # panic 直接 abort，省去 unwinding 代码
+
+[profile.test]
+# Test 编译：合并 dev + release 的优点
+opt-level = 1                  # 适度优化，测试运行更快
+incremental = true
+strip = "none"

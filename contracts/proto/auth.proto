@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+package auth;
+
+service AuthService {
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse);
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+  rpc LogoutAll(LogoutAllRequest) returns (LogoutAllResponse);
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+  rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse);
+  rpc ChangeEmail(ChangeEmailRequest) returns (ChangeEmailResponse);
+  rpc ConfirmEmailChange(ConfirmEmailChangeRequest) returns (ConfirmEmailChangeResponse);
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
+  rpc ConfirmDeleteAccount(ConfirmDeleteAccountRequest) returns (ConfirmDeleteAccountResponse);
+  rpc CancelDeleteAccount(CancelDeleteAccountRequest) returns (CancelDeleteAccountResponse);
+  rpc GetSessions(GetSessionsRequest) returns (GetSessionsResponse);
+}
+
+// -- Login --
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+  string platform = 3;
+}
+message LoginResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  string user_id = 3;
+  string email = 4;
+  string nickname = 5;
+  int32 expires_in = 6;
+}
+
+// -- Register --
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+  string nickname = 3;
+  string platform = 4;
+}
+message RegisterResponse { string message = 1; }
+
+// -- Verify Email --
+message VerifyEmailRequest {
+  string email = 1;
+  string code = 2;
+  string platform = 3;
+}
+message VerifyEmailResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  string user_id = 3;
+  string email = 4;
+  string nickname = 5;
+}
+
+// -- Logout --
+message LogoutRequest { string session_id = 1; }
+message LogoutResponse { bool success = 1; }
+message LogoutAllRequest { string user_id = 1; }
+message LogoutAllResponse { bool success = 1; }
+
+// -- Refresh Token --
+message RefreshTokenRequest { string refresh_token = 1; }
+message RefreshTokenResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  int32 expires_in = 3;
+}
+
+// -- Change Password --
+message ChangePasswordRequest {
+  string user_id = 1;
+  string old_password = 2;
+  string new_password = 3;
+}
+message ChangePasswordResponse { bool success = 1; }
+
+// -- Change Email --
+message ChangeEmailRequest {
+  string user_id = 1;
+  string new_email = 2;
+}
+message ChangeEmailResponse { string message = 1; }
+message ConfirmEmailChangeRequest {
+  string user_id = 1;
+  string code = 2;
+}
+message ConfirmEmailChangeResponse {
+  bool success = 1;
+  string new_email = 2;
+}
+
+// -- Delete Account --
+message DeleteAccountRequest { string user_id = 1; }
+message DeleteAccountResponse { string message = 1; }
+message ConfirmDeleteAccountRequest {
+  string user_id = 1;
+  string code = 2;
+}
+message ConfirmDeleteAccountResponse {
+  bool success = 1;
+  string deleted_at = 2;
+}
+message CancelDeleteAccountRequest { string user_id = 1; }
+message CancelDeleteAccountResponse { bool success = 1; }
+
+// -- Get Sessions --
+message GetSessionsRequest { string user_id = 1; }
+message SessionInfo {
+  string session_id = 1;
+  string platform = 2;
+  string created_at = 3;
+  string last_active_at = 4;
+  bool is_current = 5;
+}
+message GetSessionsResponse { repeated SessionInfo sessions = 1; }

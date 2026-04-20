@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package position;
+
+service PositionService {
+  rpc GetPositions(GetPositionsRequest) returns (GetPositionsResponse);
+  rpc GetPosition(GetPositionRequest) returns (GetPositionResponse);
+  rpc GetPositionHistory(GetPositionHistoryRequest) returns (GetPositionHistoryResponse);
+  rpc UpdatePosition(UpdatePositionRequest) returns (UpdatePositionResponse);
+}
+
+// --- GetPositions ---
+message GetPositionsRequest {
+  string user_id = 1;
+}
+
+message PositionInfo {
+  string position_id = 1;
+  string user_id = 2;
+  string symbol = 3;
+  int64 quantity = 4;
+  int64 cost_price = 5;
+  int64 current_price = 6;
+  int64 unrealized_pnl = 7;
+  string status = 8;
+  string created_at = 9;
+  string updated_at = 10;
+}
+
+message GetPositionsResponse {
+  repeated PositionInfo positions = 1;
+  int64 total_market_value = 2;
+  int64 total_unrealized_pnl = 3;
+}
+
+// --- GetPosition ---
+message GetPositionRequest {
+  string user_id = 1;
+  string symbol = 2;
+}
+
+message GetPositionResponse {
+  PositionInfo position = 1;
+}
+
+// --- GetPositionHistory ---
+message GetPositionHistoryRequest {
+  string position_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message PositionHistoryEntry {
+  string id = 1;
+  string symbol = 2;
+  string change_type = 3;
+  int64 change_quantity = 4;
+  int64 quantity_after = 5;
+  int64 price = 6;
+  string created_at = 7;
+}
+
+message GetPositionHistoryResponse {
+  repeated PositionHistoryEntry entries = 1;
+  int32 total = 2;
+}
+
+// --- UpdatePosition ---
+message UpdatePositionRequest {
+  string user_id = 1;
+  string symbol = 2;
+  int64 quantity_change = 3;
+  int64 price = 4;
+}
+
+message UpdatePositionResponse {
+  string position_id = 1;
+  int64 quantity_after = 2;
+  int64 cost_price_after = 3;
+  int64 realized_pnl = 4;
+}

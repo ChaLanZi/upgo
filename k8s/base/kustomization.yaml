@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - postgres-config.yaml
+  - postgres-deployment.yaml
+  - postgres-service.yaml
+  - postgres-pvc.yaml
+  - nats-statefulset.yaml
+  - nats-service.yaml
+  - redis-deployment.yaml
+  - redis-service.yaml
+  - signoz-config.yaml
+  - signoz-deployment.yaml
+  - signoz-service.yaml
+  - rnacos-deployment.yaml
+  - rnacos-service.yaml
+  - mailpit-deployment.yaml
+  - mailpit-service.yaml
+  - auth-deployment.yaml
+  - auth-service.yaml
+  - auth-config.yaml
+  - auth-secret.yaml

@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rnacos
+  labels:
+    app: rnacos
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rnacos
+  template:
+    metadata:
+      labels:
+        app: rnacos
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:16
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for PostgreSQL to be ready..."
+              until pg_isready -h postgres -U postgres -d upgo_account; do
+                echo "PostgreSQL not ready yet, retrying in 2s..."
+                sleep 2
+              done
+              echo "PostgreSQL is ready!"
+      containers:
+        - name: rnacos
+          image: qingpan/rnacos:latest
+          ports:
+            - containerPort: 8848
+              name: http
+            - containerPort: 9848
+              name: grpc
+          env:
+            - name: RNACOS_AUTH_ENABLED
+              value: "false"
+            - name: RNACOS_DB_DSN
+              value: "postgres://postgres:postgres@postgres:5432/upgo_account?sslmode=disable"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8848
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8848
+            initialDelaySeconds: 5
+            periodSeconds: 5
