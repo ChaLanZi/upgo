@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use account::domain::events::AccountEvent;
 use account::domain::fund::{FundAccount, FundTransaction};
 use account::domain::user::{User, UserId};
