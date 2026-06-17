@@ -30,6 +30,7 @@ spec:
       containers:
         - name: rnacos
           image: qingpan/rnacos:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8848
               name: http

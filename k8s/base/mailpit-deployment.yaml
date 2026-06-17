@@ -17,6 +17,7 @@ spec:
       containers:
         - name: mailpit
           image: axllent/mailpit:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 1025
               name: smtp
@@ -35,14 +36,12 @@ spec:
               memory: "64Mi"
               cpu: "100m"
           livenessProbe:
-            httpGet:
-              path: /health
+            tcpSocket:
+              port: 8025
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            tcpSocket:
               port: 8025
             initialDelaySeconds: 5
             periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 8025
-            initialDelaySeconds: 3
-            periodSeconds: 5

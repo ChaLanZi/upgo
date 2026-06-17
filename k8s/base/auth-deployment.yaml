@@ -17,6 +17,7 @@ spec:
       containers:
         - name: auth
           image: upgo-auth:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 50052
               name: grpc
@@ -46,24 +47,3 @@ spec:
               port: 9090
             initialDelaySeconds: 5
             periodSeconds: 5
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: auth-hpa
-  labels:
-    app: auth
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: auth
-  minReplicas: 1
-  maxReplicas: 10
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 70

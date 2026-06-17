@@ -1,10 +1,13 @@
-// Dagger CI/CD pipeline for upgo project.
+// Dagger CI/CD pipeline for upgo.
 //
-// Entrypoints:
+// Runs inside an isolated rust:slim container (tracks latest stable).
+// For local development with Docker access, use `dagger run sh -c` instead.
 //
-//	dagger run go run . ci       — cargo check + cargo nextest
-//	dagger run go run . check    — cargo check only
-//	dagger run go run . test     — cargo nextest only
+// Usage:
+//
+//	dagger run go run . ci           — cargo check + cargo nextest (default)
+//	dagger run go run . check        — cargo check only
+//	dagger run go run . test         — cargo nextest only
 package main
 
 import (
@@ -29,15 +32,23 @@ func main() {
 		entrypoint = os.Args[1]
 	}
 
-	// Get source directory excluding artifacts
+	// -----------------------------------------------------------------------
+	// Source directory (exclude local artifacts; ci/ is excluded because it
+	// contains only the Dagger pipeline itself, not needed inside the build)
+	// -----------------------------------------------------------------------
 	src := client.Host().Directory(".", dagger.HostDirectoryOpts{
 		Exclude: []string{"target", "node_modules", ".git", ".dagger", "ci"},
 	})
 
-	// Mount source into a Rust container and run commands
-	rust := client.Container().From("rust:1.85-slim").
+	rust := client.Container().From("rust:slim").
 		WithMountedDirectory("/src", src).
 		WithWorkdir("/src")
+
+	// Apply the same cfg flag used by the shell pipeline so that
+	// #[cfg(docker_tests)] code is compiled and validated.
+	// Run-time execution of Docker-based tests requires mounting the
+	// Docker socket — see the `--with-docker` variant.
+	rust = rust.WithEnvVariable("RUSTFLAGS", "--cfg docker_tests")
 
 	var out string
 	switch entrypoint {
@@ -45,14 +56,14 @@ func main() {
 		out, err = rust.WithExec([]string{"cargo", "check"}).Stdout(ctx)
 	case "test":
 		out, err = rust.WithExec([]string{"cargo", "nextest", "run"}).Stdout(ctx)
-	default:
+	default: // ci
 		out, err = rust.
 			WithExec([]string{"cargo", "check"}).
 			WithExec([]string{"cargo", "nextest", "run"}).Stdout(ctx)
 	}
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Pipeline failed: %v\n", err)
+		fmt.Fprintf(os.Stderr, "✗ Pipeline failed: %v\n", err)
 		os.Exit(1)
 	}
 	fmt.Print(out)
