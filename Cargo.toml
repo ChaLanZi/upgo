@@ -5,6 +5,7 @@ members = [
     "services/account",
     "services/auth",
     "services/gateway",
+    "services/frs",
     "frontend/auth",
 ]
 

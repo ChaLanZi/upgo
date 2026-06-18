@@ -26,3 +26,7 @@ resources:
   - auth-secret.yaml
   - frontend-deployment.yaml
   - frontend-service.yaml
+  - minio-statefulset.yaml
+  - minio-service.yaml
+  - frs-deployment.yaml
+  - frs-service.yaml
