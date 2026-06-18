@@ -4,17 +4,20 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[[bin]]
+name = "frontend-auth"
+path = "src/main.rs"
+
 [lib]
-crate-type = ["cdylib", "rlib"]
+name = "frontend_auth"
+path = "src/lib.rs"
+crate-type = ["lib"]
 
 [dependencies]
 serde.workspace = true
 serde_json.workspace = true
-wasm-bindgen-futures = "0.4"
-gloo-storage = "0.3"
 chrono.workspace = true
-wasm-logger = "0.2"
 log = "0.4"
 reqwest = { version = "0.12", features = ["json"] }
-dioxus = { version = "0.6", features = ["web"] }
-wasm-bindgen = "0.2"
+dioxus = { version = "0.6", features = ["desktop"] }
+dirs = "6"

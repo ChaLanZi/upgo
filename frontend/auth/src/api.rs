@@ -1,8 +1,7 @@
-use gloo_storage::Storage;
 use serde::{Deserialize, Serialize};
 
 /// Auth API client for communicating with the auth service.
-/// Platform-agnostic: uses reqwest on native and gloo-net on WASM.
+/// Desktop native: uses reqwest for HTTP calls.
 #[derive(Clone)]
 pub struct AuthApiClient {
     base_url: String,

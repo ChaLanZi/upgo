@@ -2,6 +2,8 @@
 
 use dioxus::prelude::*;
 
+const STYLE: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/../web/style.css"));
+
 #[component]
 pub fn App() -> Element {
     let mut email = use_signal(String::new);
@@ -9,7 +11,7 @@ pub fn App() -> Element {
     let mut msg = use_signal(String::new);
 
     rsx! {
-        link { rel: "stylesheet", href: "/style.css" }
+        document::Stylesheet { href: STYLE }
         div { class: "app-container",
             div { class: "auth-container",
                 div { class: "auth-card",
