@@ -1,11 +1,12 @@
 //! Rust API Gateway (replaces Nginx).
 //!
 //! Routes:
-//! - `/api/*` → reverse proxy to auth backend
-//! - `/*`     → serve embedded frontend static files
+//! - `/api/auth/*`   → reverse proxy to auth backend
+//! - `/api/files/*`  → reverse proxy to files (FRS) backend
+//! - `/*`            → serve embedded frontend static files
 //!
 //! Usage:
-//!   AUTH_BACKEND=http://auth:50052 cargo run -p gateway
+//!   AUTH_BACKEND=http://auth:50052 FILES_BACKEND=http://frs:9094 cargo run -p gateway
 
 use std::sync::Arc;
 
@@ -30,15 +31,21 @@ async fn main() -> Result<()> {
         std::env::var("AUTH_BACKEND")
             .unwrap_or_else(|_| "http://auth.upgo.svc.cluster.local:50052".to_string()),
     );
+    let files_backend = Arc::new(
+        std::env::var("FILES_BACKEND")
+            .unwrap_or_else(|_| "http://frs.upgo.svc.cluster.local:9094".to_string()),
+    );
     let listen_addr = std::env::var("LISTEN_ADDR").unwrap_or_else(|_| "0.0.0.0:80".to_string());
 
     tracing::info!("Gateway starting on {}", listen_addr);
     tracing::info!("Auth backend: {}", auth_backend);
+    tracing::info!("Files backend: {}", files_backend);
 
     let app = Router::new()
         .fallback(any(move |req: Request<Body>| {
-            let backend = auth_backend.clone();
-            async move { root_handler(req, backend).await }
+            let auth = auth_backend.clone();
+            let files = files_backend.clone();
+            async move { root_handler(req, auth, files).await }
         }))
         .layer(CorsLayer::permissive());
 
@@ -48,10 +55,19 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn root_handler(req: Request<Body>, auth_backend: Arc<String>) -> Response<Body> {
+async fn root_handler(
+    req: Request<Body>,
+    auth_backend: Arc<String>,
+    files_backend: Arc<String>,
+) -> Response<Body> {
     let path = req.uri().path().to_string();
 
-    if path.starts_with("/api/") {
+    if path.starts_with("/api/auth/") {
+        proxy::api_proxy(req, &auth_backend).await
+    } else if path.starts_with("/api/files/") {
+        proxy::api_proxy(req, &files_backend).await
+    } else if path.starts_with("/api/") {
+        // fallback for any /api/* routes not matched above
         proxy::api_proxy(req, &auth_backend).await
     } else {
         static_files::serve(&path)

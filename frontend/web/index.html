@@ -1,69 +1,373 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Upgo</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
-    .container { max-width: 400px; margin: 80px auto; padding: 24px; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
-    h1 { text-align: center; margin-bottom: 24px; font-size: 24px; color: #1a1a1a; }
-    .form-group { margin-bottom: 16px; }
-    label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: #555; }
-    input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; }
-    input:focus { border-color: #4a9eff; }
-    button { width: 100%; padding: 12px; background: #4a9eff; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
-    button:hover { background: #3a8eef; }
-    .error { color: #e74c3c; font-size: 13px; margin-top: 8px; display: none; }
-    .success { color: #2ecc71; font-size: 13px; margin-top: 8px; display: none; }
-    .nav { text-align: center; margin-top: 16px; font-size: 14px; }
-    .nav a { color: #4a9eff; text-decoration: none; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>Upgo</h1>
-    <div class="form-group">
-      <label>邮箱</label>
-      <input type="email" id="email" placeholder="your@email.com" />
-    </div>
-    <div class="form-group">
-      <label>密码</label>
-      <input type="password" id="password" placeholder="••••••••" />
-    </div>
-    <button onclick="handleLogin()">登录</button>
-    <div class="error" id="errorMsg"></div>
-    <div class="success" id="successMsg"></div>
-  </div>
-  <script>
-    const AUTH_API = window.location.origin + '/api';
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Upgo</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                    sans-serif;
+                background: #f5f5f5;
+                color: #333;
+            }
+            .container {
+                max-width: 400px;
+                margin: 80px auto;
+                padding: 24px;
+                background: #fff;
+                border-radius: 12px;
+                box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            }
+            h1 {
+                text-align: center;
+                margin-bottom: 24px;
+                font-size: 24px;
+                color: #1a1a1a;
+            }
+            .form-group {
+                margin-bottom: 16px;
+            }
+            label {
+                display: block;
+                margin-bottom: 6px;
+                font-size: 14px;
+                font-weight: 500;
+                color: #555;
+            }
+            input {
+                width: 100%;
+                padding: 10px 12px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                font-size: 14px;
+                outline: none;
+            }
+            input:focus {
+                border-color: #4a9eff;
+            }
+            button {
+                width: 100%;
+                padding: 12px;
+                background: #4a9eff;
+                color: #fff;
+                border: none;
+                border-radius: 8px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+            }
+            button:hover {
+                background: #3a8eef;
+            }
+            .error {
+                color: #e74c3c;
+                font-size: 13px;
+                margin-top: 8px;
+                display: none;
+            }
+            .success {
+                color: #2ecc71;
+                font-size: 13px;
+                margin-top: 8px;
+                display: none;
+            }
+            .nav {
+                text-align: center;
+                margin-top: 16px;
+                font-size: 14px;
+            }
+            .nav a {
+                color: #4a9eff;
+                text-decoration: none;
+            }
 
-    async function handleLogin() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      document.getElementById('errorMsg').style.display = 'none';
-      document.getElementById('successMsg').style.display = 'none';
+            /* File Management */
+            .section {
+                margin-top: 24px;
+                border-top: 1px solid #eee;
+                padding-top: 20px;
+            }
+            .section h2 {
+                font-size: 18px;
+                color: #1a1a1a;
+                margin-bottom: 16px;
+            }
+            .file-upload {
+                display: flex;
+                gap: 8px;
+                align-items: flex-end;
+                flex-wrap: wrap;
+            }
+            .file-upload .form-group {
+                flex: 1;
+                min-width: 120px;
+                margin-bottom: 0;
+            }
+            .file-upload button {
+                width: auto;
+                padding: 10px 20px;
+                flex-shrink: 0;
+            }
+            .file-list {
+                margin-top: 16px;
+            }
+            .file-item {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 12px;
+                border: 1px solid #eee;
+                border-radius: 8px;
+                margin-bottom: 8px;
+            }
+            .file-item:hover {
+                background: #fafafa;
+            }
+            .file-item .name {
+                flex: 1;
+                font-size: 14px;
+                word-break: break-all;
+            }
+            .file-item .key {
+                font-size: 12px;
+                color: #999;
+                margin-right: 12px;
+            }
+            .file-item .actions {
+                display: flex;
+                gap: 8px;
+                flex-shrink: 0;
+            }
+            .file-item .actions a,
+            .file-item .actions button {
+                font-size: 12px;
+                padding: 6px 12px;
+                border-radius: 6px;
+                text-decoration: none;
+                cursor: pointer;
+                border: none;
+            }
+            .file-item .actions a {
+                background: #eaf3ff;
+                color: #4a9eff;
+            }
+            .file-item .actions a:hover {
+                background: #d4e6ff;
+            }
+            .file-item .actions .delete-btn {
+                background: #ffeaea;
+                color: #e74c3c;
+            }
+            .file-item .actions .delete-btn:hover {
+                background: #ffd4d4;
+            }
+            .empty-msg {
+                text-align: center;
+                color: #999;
+                font-size: 14px;
+                padding: 24px 0;
+            }
+            #fileListSpinner {
+                text-align: center;
+                color: #999;
+                font-size: 14px;
+                padding: 24px 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Upgo</h1>
+            <div class="form-group">
+                <label>邮箱</label>
+                <input type="email" id="email" placeholder="your@email.com" />
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" id="password" placeholder="••••••••" />
+            </div>
+            <button onclick="handleLogin()">登录</button>
+            <div class="error" id="errorMsg"></div>
+            <div class="success" id="successMsg"></div>
+        </div>
 
-      try {
-        const resp = await fetch(AUTH_API + '/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, platform: 'web' }),
-        });
-        if (resp.ok) {
-          document.getElementById('successMsg').textContent = '登录成功！';
-          document.getElementById('successMsg').style.display = 'block';
-        } else {
-          const err = await resp.json();
-          document.getElementById('errorMsg').textContent = err.error || '登录失败';
-          document.getElementById('errorMsg').style.display = 'block';
-        }
-      } catch (e) {
-        document.getElementById('errorMsg').textContent = '网络错误';
-        document.getElementById('errorMsg').style.display = 'block';
-      }
-    }
-  </script>
-</body>
+        <div class="section" id="fileSection" style="display: none">
+            <h2>文件管理</h2>
+            <div class="file-upload">
+                <div class="form-group">
+                    <label>文件 Key</label>
+                    <input type="text" id="fileKey" placeholder="example.txt" />
+                </div>
+                <div class="form-group">
+                    <label>文件</label>
+                    <input type="file" id="fileInput" />
+                </div>
+                <button onclick="handleUpload()">上传</button>
+            </div>
+            <div id="fileMsg" class="success" style="display: none"></div>
+            <div class="file-list" id="fileList">
+                <div id="fileListSpinner">加载中...</div>
+            </div>
+        </div>
+        <script>
+            const AUTH_API = window.location.origin + "/api";
+            const API_BASE = AUTH_API;
+
+            async function handleLogin() {
+                const email = document.getElementById("email").value;
+                const password = document.getElementById("password").value;
+                document.getElementById("errorMsg").style.display = "none";
+                document.getElementById("successMsg").style.display = "none";
+
+                try {
+                    const resp = await fetch(AUTH_API + "/auth/login", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            email,
+                            password,
+                            platform: "web",
+                        }),
+                    });
+                    if (resp.ok) {
+                        document.getElementById("successMsg").textContent =
+                            "登录成功！";
+                        document.getElementById("successMsg").style.display =
+                            "block";
+                        document.getElementById("fileSection").style.display =
+                            "block";
+                        loadFileList();
+                    } else {
+                        const err = await resp.json();
+                        document.getElementById("errorMsg").textContent =
+                            err.error || "登录失败";
+                        document.getElementById("errorMsg").style.display =
+                            "block";
+                    }
+                } catch (e) {
+                    document.getElementById("errorMsg").textContent =
+                        "网络错误";
+                    document.getElementById("errorMsg").style.display = "block";
+                }
+            }
+
+            /* ── File Management ── */
+
+            async function handleUpload() {
+                const key = document.getElementById("fileKey").value.trim();
+                const fileInput = document.getElementById("fileInput");
+                const msgEl = document.getElementById("fileMsg");
+                msgEl.style.display = "none";
+
+                if (!key || !fileInput.files.length) {
+                    msgEl.textContent = "请填写 key 并选择文件";
+                    msgEl.style.display = "block";
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append("file", fileInput.files[0]);
+
+                try {
+                    const resp = await fetch(
+                        API_BASE + "/files/upload/" + encodeURIComponent(key),
+                        {
+                            method: "POST",
+                            body: formData,
+                        },
+                    );
+                    if (resp.ok) {
+                        msgEl.className = "success";
+                        msgEl.textContent = "上传成功！";
+                        msgEl.style.display = "block";
+                        document.getElementById("fileKey").value = "";
+                        document.getElementById("fileInput").value = "";
+                        loadFileList();
+                    } else {
+                        const err = await resp.text();
+                        msgEl.className = "error";
+                        msgEl.textContent = err || "上传失败";
+                        msgEl.style.display = "block";
+                    }
+                } catch (e) {
+                    msgEl.className = "error";
+                    msgEl.textContent = "网络错误";
+                    msgEl.style.display = "block";
+                }
+            }
+
+            async function loadFileList() {
+                const listEl = document.getElementById("fileList");
+                listEl.innerHTML = '<div id="fileListSpinner">加载中...</div>';
+
+                try {
+                    const resp = await fetch(API_BASE + "/files/list");
+                    if (!resp.ok) {
+                        listEl.innerHTML =
+                            '<div class="empty-msg">获取文件列表失败</div>';
+                        return;
+                    }
+                    const files = await resp.json();
+                    if (!files.length) {
+                        listEl.innerHTML =
+                            '<div class="empty-msg">暂无文件</div>';
+                        return;
+                    }
+                    listEl.innerHTML = files
+                        .map(
+                            (f) =>
+                                `<div class="file-item">
+                                    <div>
+                                        <div class="name">${f.name || f.key}</div>
+                                        <div class="key">${f.key}</div>
+                                    </div>
+                                    <div class="actions">
+                                        <a href="${API_BASE}/files/download/${encodeURIComponent(f.key)}" download>下载</a>
+                                        <button class="delete-btn" onclick="handleDelete('${f.key}')">删除</button>
+                                    </div>
+                                </div>`,
+                        )
+                        .join("");
+                } catch (e) {
+                    listEl.innerHTML = '<div class="empty-msg">网络错误</div>';
+                }
+            }
+
+            async function handleDelete(key) {
+                if (!confirm("确认删除 " + key + " ？")) return;
+                try {
+                    const resp = await fetch(
+                        API_BASE + "/files/delete/" + encodeURIComponent(key),
+                        {
+                            method: "DELETE",
+                        },
+                    );
+                    const msgEl = document.getElementById("fileMsg");
+                    if (resp.ok) {
+                        msgEl.className = "success";
+                        msgEl.textContent = "删除成功";
+                        msgEl.style.display = "block";
+                        loadFileList();
+                    } else {
+                        const err = await resp.text();
+                        msgEl.className = "error";
+                        msgEl.textContent = err || "删除失败";
+                        msgEl.style.display = "block";
+                    }
+                } catch (e) {
+                    const msgEl = document.getElementById("fileMsg");
+                    msgEl.className = "error";
+                    msgEl.textContent = "网络错误";
+                    msgEl.style.display = "block";
+                }
+            }
+        </script>
+    </body>
 </html>

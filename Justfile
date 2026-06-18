@@ -80,6 +80,7 @@ infra-cache:
       "qingpan/rnacos:latest" \
       "clickhouse/clickhouse-server:24.3" \
       "signoz/signoz-otel-collector:0.88.17" \
+      "quay.io/minio/minio:latest" \
     ); \
     for img in "$${IMAGES[@]}"; do \
       echo "Pulling $$img..."; \
@@ -134,6 +135,35 @@ deploy-auth:
 # 构建 + 加载 + 部署 Auth 服务（全自动）
 deploy-auth-full: build-auth-full deploy-auth
 
+# 构建 FRS 服务镜像（多阶段构建）
+build-frs:
+    @echo "=== Building frs service image ==="
+    docker build -t upgo-frs:latest -f Dockerfile.frs .
+    @echo "=== Image built: ==="
+    docker images upgo-frs
+
+# 加载 FRS 镜像到 Minikube
+load-frs:
+    @echo "=== Loading frs image into Minikube ==="
+    docker save upgo-frs:latest -o /tmp/upgo-frs.tar
+    docker cp /tmp/upgo-frs.tar minikube:/upgo-frs.tar
+    docker exec minikube docker load -i /upgo-frs.tar
+    @echo "=== Verify ==="
+    docker exec minikube docker images upgo-frs
+
+# 构建 + 加载 FRS 镜像（一步完成）
+build-frs-full: build-frs load-frs
+
+# 部署 FRS 服务（重启使用新镜像）
+deploy-frs:
+    @echo "=== Deploying frs service ==="
+    kubectl apply -k k8s/overlays/dev
+    kubectl rollout restart deployment frs -n upgo
+    kubectl rollout status deployment frs -n upgo --timeout=120s
+
+# 构建 + 加载 + 部署 FRS 服务（全自动）
+deploy-frs-full: build-frs-full deploy-frs
+
 # ══════════════════════════════════════════════════════════
 # 测试
 # ══════════════════════════════════════════════════════════
@@ -168,7 +198,7 @@ dagger-ci-go:
 # ══════════════════════════════════════════════════════════
 
 # 完整部署流程：缓存镜像 → 部署基础设施 → 构建服务 → 部署服务
-deploy-all: infra-cache k8s-up build-auth-full deploy-auth
+deploy-all: infra-cache k8s-up build-auth-full deploy-auth build-frs-full deploy-frs
     @echo "=== All services deployed ==="
     kubectl get pods -n upgo
 
@@ -190,5 +220,10 @@ verify:
     @echo "=== Auth Health Check ==="
     -kubectl port-forward -n upgo svc/auth 9090:9090 &
     @sleep 2
-    -curl -s http://localhost:9090/health && echo "" || echo "⚠️  Health check failed"
+    -curl -s http://localhost:9090/health && echo "" || echo "⚠️  Auth health check failed"
     @-kill %1 2>/dev/null
+    @echo "=== FRS Health Check ==="
+    -kubectl port-forward -n upgo svc/frs 9094:9094 &
+    @sleep 2
+    -curl -s http://localhost:9094/api/files/list && echo "" || echo "⚠️  FRS health check failed"
+    @-kill %2 2>/dev/null
