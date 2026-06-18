@@ -185,6 +185,7 @@ dependencies = [
  "serde_json",
  "sha2 0.10.9",
  "sqlx",
+ "telemetry",
  "thiserror 2.0.18",
  "tokio",
  "tonic",
@@ -1548,6 +1549,7 @@ dependencies = [
  "futures",
  "serde",
  "serde_json",
+ "telemetry",
  "thiserror 2.0.18",
  "tokio",
  "tonic",
@@ -1675,6 +1677,7 @@ dependencies = [
  "rust-embed",
  "serde",
  "serde_json",
+ "telemetry",
  "tokio",
  "tower-http",
  "tracing",
@@ -4183,6 +4186,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "telemetry"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "opentelemetry",
+ "opentelemetry-otlp",
+ "opentelemetry_sdk",
+ "tokio",
+ "tracing",
+ "tracing-opentelemetry",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "tempfile"
 version = "3.27.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4629,6 +4646,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tracing-serde"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "704b1aeb7be0d0a84fc9828cae51dab5970fee5088f83d1dd7ee6f6246fc6ff1"
+dependencies = [
+ "serde",
+ "tracing-core",
+]
+
+[[package]]
 name = "tracing-subscriber"
 version = "0.3.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4638,12 +4665,15 @@ dependencies = [
  "nu-ansi-term",
  "once_cell",
  "regex-automata",
+ "serde",
+ "serde_json",
  "sharded-slab",
  "smallvec",
  "thread_local",
  "tracing",
  "tracing-core",
  "tracing-log",
+ "tracing-serde",
 ]
 
 [[package]]

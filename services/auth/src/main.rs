@@ -28,9 +28,13 @@ use tonic::transport::Server;
 async fn main() -> Result<()> {
     let config = AppConfig::from_env()?;
 
-    tracing_subscriber::fmt()
-        .with_env_filter(&config.log_level)
-        .init();
+    // Initialize OpenTelemetry
+    let _otel = telemetry::init(telemetry::TelemetryConfig {
+        service_name: "auth".into(),
+        otlp_endpoint: std::env::var("OTEL_EXPORTER_OTLP_ENDPOINT")
+            .unwrap_or_else(|_| "http://signoz-otel-collector:4317".into()),
+        log_level: config.log_level.clone(),
+    })?;
 
     tracing::info!("Starting Auth Service...");
 

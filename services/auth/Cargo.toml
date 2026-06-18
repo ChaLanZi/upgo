@@ -28,6 +28,7 @@ lettre = { version = "0.11", default-features = false, features = ["tokio1-nativ
 sha2 = "0.10"
 tower-http = { version = "0.6", features = ["cors"] }
 http = "1"
+telemetry = { path = "../../lib/telemetry" }
 
 [features]
 default = []

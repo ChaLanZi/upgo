@@ -18,3 +18,4 @@ reqwest = { version = "0.12", features = ["json"] }
 tower-http = { version = "0.6", features = ["cors"] }
 http-body-util = "0.1"
 http = "1"
+telemetry = { path = "../../lib/telemetry" }

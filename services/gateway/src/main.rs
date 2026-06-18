@@ -23,9 +23,13 @@ mod static_files;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    tracing_subscriber::fmt()
-        .with_env_filter(std::env::var("LOG_LEVEL").unwrap_or_else(|_| "info".to_string()))
-        .init();
+    // Initialize OpenTelemetry (before any tracing calls)
+    let _otel = telemetry::init(telemetry::TelemetryConfig {
+        service_name: "gateway".into(),
+        otlp_endpoint: std::env::var("OTEL_EXPORTER_OTLP_ENDPOINT")
+            .unwrap_or_else(|_| "http://signoz-otel-collector:4317".into()),
+        log_level: std::env::var("LOG_LEVEL").unwrap_or_else(|_| "info".to_string()),
+    })?;
 
     let auth_backend = Arc::new(
         std::env::var("AUTH_BACKEND")

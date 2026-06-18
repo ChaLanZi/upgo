@@ -28,3 +28,4 @@ aws-types = "1"
 # HTTP body streaming
 bytes = "1"
 tower-http = { version = "0.6", features = ["cors", "fs"] }
+telemetry = { path = "../../lib/telemetry" }
