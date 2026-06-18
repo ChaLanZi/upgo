@@ -26,8 +26,7 @@ data:
 
       # SigNoz: export traces and metrics to ClickHouse
       clickhousetraces:
-        datasource: tcp://clickhouse:9000
-        # Recommended but optional batch configuration
+        datasource: tcp://clickhouse:9000/signoz_traces
         timeout: 5s
         sending_queue:
           queue_size: 1000
@@ -37,6 +36,7 @@ data:
 
       clickhousemetricswrite:
         endpoint: tcp://clickhouse:9000
+        database: signoz_metrics
         resource_to_telemetry_conversion:
           enabled: true
 

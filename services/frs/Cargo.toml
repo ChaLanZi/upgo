@@ -20,7 +20,7 @@ async-trait.workspace = true
 futures.workspace = true
 
 # S3 client for MinIO
-aws-sdk-s3 = "1"
+aws-sdk-s3 = { version = "1", features = ["behavior-version-latest"] }
 aws-config = { version = "1", features = ["behavior-version-latest"] }
 aws-credential-types = "1"
 aws-types = "1"
