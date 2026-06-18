@@ -276,10 +276,90 @@ kubectl exec <postgres-pod> -- psql -U postgres -c "CREATE DATABASE upgo_auth;"
 
 ### 🔴 镜像构建超时
 
-**现象：** `docker build` 长时间卡住后超时
+**现象：** `docker build` 长时间卡住后超时（尤其 `aws-sdk-s3` 编译）
 
-**修复：** 创建 `.dockerignore` 缩小构建上下文；首次构建约需 10 分钟
-（Rust 编译），之后有层缓存会快很多。
+**根因：** `COPY . .` 使 Docker 层缓存失效，导致每次从头编译所有依赖。
+
+**修复：** Dockerfile 分层构建，分离依赖编译与源码编译：
+
+```dockerfile
+# 先只 COPY Cargo.toml 编译依赖
+COPY Cargo.toml Cargo.lock ./
+COPY services/frs/Cargo.toml services/frs/Cargo.toml
+RUN mkdir -p services/frs/src && \
+    echo "fn main() {}" > services/frs/src/main.rs && \
+    cargo build --release -p frs 2>/dev/null || true
+
+# 再 COPY 真实源码（仅增量编译）
+COPY . .
+RUN cargo build --release -p frs
+```
+
+### 🔴 glibc 不匹配（GLIBC_X.X not found）
+
+**现象：** Pod 日志 `GLIBC_2.38 not found (required by frs)`
+
+**根因：** Builder 和 Runtime 使用不同 base image，glibc 版本不一致。
+
+**修复：** 多阶段构建的 Runtime 阶段使用与 Builder 相同的 base image：
+
+```dockerfile
+FROM rust:slim AS builder     # glibc 2.38
+FROM rust:slim                # ← 必须和 builder 一致，不能换成 debian:bookworm-slim
+```
+
+### 🔴 OOM（Exit Code 137）
+
+**现象：** Pod 无限重启，`kubectl describe pod` 显示 `Exit Code: 137`（SIGKILL）
+
+**根因：** 内存限制过低，Rust 服务（特别是使用 reqwest/AWS SDK 的）需要更多内存。
+
+**修复：** 提高 resources limits：
+
+```yaml
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "200m"
+  limits:
+    memory: "1Gi"
+    cpu: "500m"
+```
+
+### 🔴 AWS SDK behavior-version-latest 缺失
+
+**现象：** FRS 启动 panic：`A behavior major version must be set...`
+
+**修复：** 在 `Cargo.toml` 中添加 feature：
+
+```toml
+aws-sdk-s3 = { version = "1", features = ["behavior-version-latest"] }
+```
+
+### 🔴 基础设施 Service 缺失
+
+**现象：** Pod 日志 `dial tcp: lookup clickhouse: no such host`
+
+**修复：** 为 StatefulSet 创建对应的 Service：
+
+```bash
+kubectl apply -f k8s/base/clickhouse-service.yaml
+```
+
+---
+
+## 固化规则
+
+| 规则 | 说明 | 违反后果 |
+|------|------|----------|
+| Dockerfile 分层缓存 | 先 COPY 依赖清单编译，再 COPY 源码 | 构建超时 >15min |
+| 运行时版本一致 | Runtime base image 必须与 Builder 相同 | GLIBC 不匹配崩溃 |
+| Pod 内存评估 | Rust 服务初始设为 256Mi/1Gi | OOM 无限重启 |
+| AWS SDK features | 必须启用 `behavior-version-latest` | 启动 panic |
+| Service 完整性 | 每个 StatefulSet 必须有对应 Service | DNS 解析失败 |
+| 有状态服务保护 | 用 `upgo` namespace，避免 `delete all` | 数据丢失 |
+
+> 完整 Runbook 见 `doc/runbook.md`
 
 ---
 
