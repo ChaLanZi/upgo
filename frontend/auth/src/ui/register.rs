@@ -1,71 +1,66 @@
-/// Registration page component with email verification flow.
-///
-/// Two-step flow:
-/// 1. Submit email + password + nickname → receive verification code
-/// 2. Enter verification code → complete registration → auto-login
-pub struct RegisterPage {
-    // Step 1 fields
-    pub email: String,
-    pub password: String,
-    pub nickname: String,
-    // Step 2 fields
-    pub verification_code: String,
-    pub code_sent: bool,
-    // State
-    pub error: Option<String>,
-    pub loading: bool,
-    pub on_register: Option<Box<dyn Fn(String, String, String)>>,  // email, password, nickname
-    pub on_verify: Option<Box<dyn Fn(String, String)>>,  // email, code
-    pub on_login_click: Option<Box<dyn Fn()>>,
-}
+use dioxus::prelude::*;
 
-impl RegisterPage {
-    pub fn new() -> Self {
-        Self {
-            email: String::new(),
-            password: String::new(),
-            nickname: String::new(),
-            verification_code: String::new(),
-            code_sent: false,
-            error: None,
-            loading: false,
-            on_register: None,
-            on_verify: None,
-            on_login_click: None,
-        }
-    }
+#[component]
+pub fn RegisterPage(
+    on_register: EventHandler<(String, String, String)>,
+    on_verify: EventHandler<(String, String)>,
+    on_login: EventHandler<()>,
+    error: String,
+) -> Element {
+    let mut step = use_signal(|| 1u8);
+    let mut email = use_signal(String::new);
+    let mut password = use_signal(String::new);
+    let mut nickname = use_signal(String::new);
+    let mut code = use_signal(String::new);
 
-    pub fn submit_registration(&mut self) {
-        if self.email.is_empty() || !self.email.contains('@') {
-            self.error = Some("Valid email is required".to_string());
-            return;
-        }
-        if self.password.len() < 8 {
-            self.error = Some("Password must be at least 8 characters".to_string());
-            return;
-        }
-        if self.nickname.is_empty() {
-            self.error = Some("Nickname is required".to_string());
-            return;
-        }
-        if let Some(ref cb) = self.on_register {
-            cb(self.email.clone(), self.password.clone(), self.nickname.clone());
-        }
-    }
+    rsx! {
+        div { class: "auth-container",
+            div { class: "auth-card",
+                h1 { class: "auth-title", "Create Account" }
 
-    pub fn submit_verification(&mut self) {
-        if self.verification_code.len() != 6 {
-            self.error = Some("Verification code must be 6 digits".to_string());
-            return;
-        }
-        if let Some(ref cb) = self.on_verify {
-            cb(self.email.clone(), self.verification_code.clone());
-        }
-    }
-}
+                if !error.is_empty() {
+                    div { class: "alert alert-info", "{error}" }
+                }
 
-impl Default for RegisterPage {
-    fn default() -> Self {
-        Self::new()
+                // Step 1: Register
+                if step() == 1 {
+                    div { class: "form-group",
+                        label { "Email" }
+                        input { class: "form-input", r#type: "email", placeholder: "your@email.com",
+                            value: "{email}", oninput: move |e| email.set(e.value()) }
+                    }
+                    div { class: "form-group",
+                        label { "Nickname" }
+                        input { class: "form-input", placeholder: "Display name",
+                            value: "{nickname}", oninput: move |e| nickname.set(e.value()) }
+                    }
+                    div { class: "form-group",
+                        label { "Password" }
+                        input { class: "form-input", r#type: "password", placeholder: "Min 8 characters",
+                            value: "{password}", oninput: move |e| password.set(e.value()) }
+                    }
+                    button { class: "btn btn-primary btn-full",
+                        onclick: move |_| { on_register.call((email(), password(), nickname())); step.set(2); },
+                        "Send Verification Code" }
+                }
+
+                // Step 2: Verify Email
+                if step() == 2 {
+                    div { class: "form-group",
+                        label { "Verification Code" }
+                        input { class: "form-input", placeholder: "6-digit code",
+                            value: "{code}", oninput: move |e| code.set(e.value()) }
+                    }
+                    button { class: "btn btn-primary btn-full",
+                        onclick: move |_| on_verify.call((email(), code())),
+                        "Verify & Complete" }
+                }
+
+                p { class: "auth-footer",
+                    "Already have an account? "
+                    a { href: "#", onclick: move |_| on_login.call(()), "Sign In" }
+                }
+            }
+        }
     }
 }

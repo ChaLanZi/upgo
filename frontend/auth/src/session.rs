@@ -1,7 +1,7 @@
+use gloo_storage::Storage;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::rc::Rc;
-use gloo_storage::Storage;
 
 const ACCESS_TOKEN_KEY: &str = "upgo_access_token";
 const REFRESH_TOKEN_KEY: &str = "upgo_refresh_token";
@@ -23,9 +23,9 @@ pub enum AuthState {
 
 /// Manages authentication state and token lifecycle in the browser.
 /// Uses gloo-storage for Web, and can be adapted for desktop/mobile via feature flags.
+#[derive(Clone)]
 pub struct SessionManager {
     state: Rc<RefCell<AuthState>>,
-    on_change: Option<Box<dyn Fn(AuthState)>>,
 }
 
 impl SessionManager {
@@ -41,7 +41,6 @@ impl SessionManager {
 
         Self {
             state: Rc::new(RefCell::new(state)),
-            on_change: None,
         }
     }
 
@@ -50,10 +49,7 @@ impl SessionManager {
         let current = self.state.borrow().clone();
         match &current {
             AuthState::Authenticated { access_token, .. } => {
-                // Try to refresh if we have a refresh token
                 if let Some(rt) = Self::get_stored(&REFRESH_TOKEN_KEY) {
-                    // In production: call refresh API here
-                    // For now, check if access token looks valid
                     if access_token.len() > 10 {
                         return current;
                     }
@@ -89,20 +85,10 @@ impl SessionManager {
         self.set_state(AuthState::Unauthenticated);
     }
 
-    /// Handle 401 response: attempt token refresh, return new access token
-    pub async fn handle_unauthorized(&self) -> Option<String> {
-        let rt = Self::get_stored(&REFRESH_TOKEN_KEY)?;
-
-        // In production: call /api/auth/refresh with refresh_token
-        // For now, simulate a refresh
-        self.set_state(AuthState::Loading);
-
-        // On failure, logout
-        self.logout();
-        None
+    fn set_state(&self, new_state: AuthState) {
+        *self.state.borrow_mut() = new_state;
     }
 
-    /// Get stored value (platform-agnostic)
     fn get_stored(key: &str) -> Option<String> {
         #[cfg(target_arch = "wasm32")]
         {
@@ -110,7 +96,6 @@ impl SessionManager {
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
-            // Desktop/mobile: use platform-specific storage
             None
         }
     }
@@ -126,13 +111,6 @@ impl SessionManager {
         #[cfg(target_arch = "wasm32")]
         {
             let _ = gloo_storage::LocalStorage::delete(key);
-        }
-    }
-
-    fn set_state(&self, new_state: AuthState) {
-        *self.state.borrow_mut() = new_state.clone();
-        if let Some(ref cb) = self.on_change {
-            cb(new_state);
         }
     }
 }

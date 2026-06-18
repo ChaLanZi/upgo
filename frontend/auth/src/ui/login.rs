@@ -1,64 +1,54 @@
-/// Login page component.
-///
-/// Platform-agnostic structure. Adapt rendering per platform:
-/// - Web: HTML form via Dioxus Web
-/// - Desktop: Native window via Dioxus Desktop
-/// - Mobile: Native form via Dioxus Mobile
-///
-/// # State
-/// - `email`: String — email input
-/// - `password`: String — password input
-/// - `error`: Option<String> — error message
-/// - `loading`: bool — submission in progress
-pub struct LoginPage {
-    pub email: String,
-    pub password: String,
-    pub error: Option<String>,
-    pub loading: bool,
-    pub on_login: Option<Box<dyn Fn(String, String)>>,  // email, password
-    pub on_register_click: Option<Box<dyn Fn()>>,
-}
+use dioxus::prelude::*;
 
-impl LoginPage {
-    pub fn new() -> Self {
-        Self {
-            email: String::new(),
-            password: String::new(),
-            error: None,
-            loading: false,
-            on_login: None,
-            on_register_click: None,
-        }
-    }
+#[component]
+pub fn LoginPage(
+    on_login: EventHandler<(String, String)>,
+    on_register: EventHandler<()>,
+    error: String,
+) -> Element {
+    let mut email = use_signal(String::new);
+    let mut password = use_signal(String::new);
 
-    /// Validate form inputs
-    pub fn validate(&self) -> Option<String> {
-        if self.email.is_empty() {
-            return Some("Email is required".to_string());
-        }
-        if !self.email.contains('@') {
-            return Some("Invalid email format".to_string());
-        }
-        if self.password.len() < 8 {
-            return Some("Password must be at least 8 characters".to_string());
-        }
-        None
-    }
+    rsx! {
+        div { class: "auth-container",
+            div { class: "auth-card",
+                h1 { class: "auth-title", "Upgo" }
+                p { class: "auth-subtitle", "Sign in to your account" }
 
-    /// Submit login form
-    pub fn submit(&mut self) {
-        if let Some(err) = self.validate() {
-            self.error = Some(err);
-            return;
-        }
-        if let Some(ref cb) = self.on_login {
-            cb(self.email.clone(), self.password.clone());
-        }
-    }
-}
+                if !error.is_empty() {
+                    div { class: "alert alert-error", "{error}" }
+                }
 
-impl Default for LoginPage {
-    fn default() -> Self {
-        Self::new()
+                div { class: "form-group",
+                    label { "Email" }
+                    input {
+                        class: "form-input",
+                        r#type: "email",
+                        placeholder: "your@email.com",
+                        value: "{email}",
+                        oninput: move |e| email.set(e.value()),
+                    }
+                }
+                div { class: "form-group",
+                    label { "Password" }
+                    input {
+                        class: "form-input",
+                        r#type: "password",
+                        placeholder: "••••••••",
+                        value: "{password}",
+                        oninput: move |e| password.set(e.value()),
+                    }
+                }
+                button {
+                    class: "btn btn-primary btn-full",
+                    onclick: move |_| on_login.call((email(), password())),
+                    "Sign In"
+                }
+                p { class: "auth-footer",
+                    "Don't have an account? "
+                    a { href: "#", onclick: move |_| on_register.call(()), "Register" }
+                }
+            }
+        }
     }
 }

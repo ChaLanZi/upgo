@@ -1,8 +1,9 @@
-use serde::{Deserialize, Serialize};
 use gloo_storage::Storage;
+use serde::{Deserialize, Serialize};
 
 /// Auth API client for communicating with the auth service.
 /// Platform-agnostic: uses reqwest on native and gloo-net on WASM.
+#[derive(Clone)]
 pub struct AuthApiClient {
     base_url: String,
 }
@@ -67,7 +68,9 @@ impl AuthApiClient {
                 .map_err(|e| format!("Parse error: {}", e))
         } else {
             let err = resp.json::<ErrorResponse>().await.ok();
-            Err(err.map(|e| e.error).unwrap_or_else(|| "Unknown error".to_string()))
+            Err(err
+                .map(|e| e.error)
+                .unwrap_or_else(|| "Unknown error".to_string()))
         }
     }
 
@@ -85,7 +88,9 @@ impl AuthApiClient {
             Ok(())
         } else {
             let err = resp.json::<ErrorResponse>().await.ok();
-            Err(err.map(|e| e.error).unwrap_or_else(|| "Registration failed".to_string()))
+            Err(err
+                .map(|e| e.error)
+                .unwrap_or_else(|| "Registration failed".to_string()))
         }
     }
 
@@ -105,7 +110,9 @@ impl AuthApiClient {
                 .map_err(|e| format!("Parse error: {}", e))
         } else {
             let err = resp.json::<ErrorResponse>().await.ok();
-            Err(err.map(|e| e.error).unwrap_or_else(|| "Verification failed".to_string()))
+            Err(err
+                .map(|e| e.error)
+                .unwrap_or_else(|| "Verification failed".to_string()))
         }
     }
 

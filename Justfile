@@ -227,3 +227,38 @@ verify:
     @sleep 2
     -curl -s http://localhost:9094/api/files/list && echo "" || echo "⚠️  FRS health check failed"
     @-kill %2 2>/dev/null
+
+# ══════════════════════════════════════════════════════════
+# 开机自启
+# ══════════════════════════════════════════════════════════
+
+# 启动开发环境（等待 Docker → 启动 Minikube → 部署服务 → 端口转发）
+startup:
+    @echo "=== Starting upgo development environment ==="
+    ./scripts/upgo-start.sh
+
+# 停止开发环境
+shutdown:
+    @echo "=== Shutting down upgo ==="
+    @echo "Stopping port-forwards..."
+    -pkill -f "kubectl port-forward.*upgo" 2>/dev/null || true
+    -kill \$(cat /tmp/upgo-pf.pid 2>/dev/null) 2>/dev/null || true
+    @echo "Stopping Minikube..."
+    -minikube stop 2>/dev/null || true
+    @echo "Done"
+
+# 安装 launchd 自启（开机自动运行 startup）
+install-launchd:
+    @echo "=== Installing launchd plist ==="
+    cp scripts/com.upgo.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.upgo.plist
+    @echo "Installed. To uninstall:"
+    @echo "  launchctl unload ~/Library/LaunchAgents/com.upgo.plist"
+    @echo "  rm ~/Library/LaunchAgents/com.upgo.plist"
+
+# 卸载 launchd 自启
+uninstall-launchd:
+    @echo "=== Uninstalling launchd plist ==="
+    -launchctl unload ~/Library/LaunchAgents/com.upgo.plist 2>/dev/null || true
+    -rm ~/Library/LaunchAgents/com.upgo.plist 2>/dev/null || true
+    @echo "Uninstalled"
