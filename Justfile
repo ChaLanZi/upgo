@@ -15,16 +15,18 @@ dotenv-load:
 k8s-up:
     @echo "=== Checking Minikube status ==="
     minikube status || minikube start --driver=docker --cpus=2 --memory=4096
+    @echo "=== Creating namespace ==="
+    kubectl create namespace upgo --dry-run=client -o yaml | kubectl apply -f -
     @echo "=== Deploying k8s infrastructure ==="
     kubectl apply -k k8s/overlays/dev
     @echo "=== Waiting for deployments ready ==="
-    kubectl wait --for=condition=Available deployments --all --timeout=120s
+    kubectl wait --for=condition=Available deployments --all -n upgo --timeout=120s
     @echo "=== Creating databases ==="
-    -kubectl exec deploy/postgres -- psql -U postgres -c "CREATE DATABASE upgo_auth;" 2>/dev/null
-    -kubectl exec deploy/postgres -- psql -U postgres -c "CREATE DATABASE upgo_account;" 2>/dev/null
+    -kubectl exec -n upgo deploy/postgres -- psql -U postgres -c "CREATE DATABASE upgo_auth;" 2>/dev/null
+    -kubectl exec -n upgo deploy/postgres -- psql -U postgres -c "CREATE DATABASE upgo_account;" 2>/dev/null
     @echo "=== Exposing services ==="
-    minikube service postgres --url
-    minikube service nats --url
+    minikube service postgres --url -n upgo
+    minikube service nats --url -n upgo
 
 # 暂停 Minikube（保留数据）
 k8s-down:
@@ -36,13 +38,14 @@ k8s-reset:
     @echo "=== Resetting Minikube ==="
     minikube delete
     minikube start --driver=docker --cpus=2 --memory=4096
+    kubectl create namespace upgo --dry-run=client -o yaml | kubectl apply -f -
     just infra-deploy
     just infra-db
 
 # 查看基础设施日志
 k8s-logs:
     @echo "=== Streaming all pod logs ==="
-    kubectl logs -l 'app in (postgres, nats, redis, signoz-otel-collector, clickhouse, rnacos)' --tail=50 -f
+    kubectl logs -n upgo -l 'app in (postgres, nats, redis, signoz-otel-collector, clickhouse, rnacos)' --tail=50 -f
 
 # ══════════════════════════════════════════════════════════
 # 基础设施部署
@@ -50,15 +53,17 @@ k8s-logs:
 
 # 部署基础设施到 k8s
 infra-deploy:
+    @echo "=== Creating namespace ==="
+    kubectl create namespace upgo --dry-run=client -o yaml | kubectl apply -f -
     @echo "=== Deploying infrastructure ==="
     kubectl apply -k k8s/overlays/dev
-    kubectl wait --for=condition=Available deployments --all --timeout=120s
+    kubectl wait --for=condition=Available deployments --all -n upgo --timeout=120s
 
 # 创建服务所需的数据库
 infra-db:
     @echo "=== Creating databases ==="
-    -kubectl exec deploy/postgres -- psql -U postgres -c "CREATE DATABASE upgo_auth;" 2>/dev/null
-    -kubectl exec deploy/postgres -- psql -U postgres -c "CREATE DATABASE upgo_account;" 2>/dev/null
+    -kubectl exec -n upgo deploy/postgres -- psql -U postgres -c "CREATE DATABASE upgo_auth;" 2>/dev/null
+    -kubectl exec -n upgo deploy/postgres -- psql -U postgres -c "CREATE DATABASE upgo_account;" 2>/dev/null
 
 # ══════════════════════════════════════════════════════════
 # 基础设施镜像缓存（中国网络必需）
@@ -123,8 +128,8 @@ build-auth-full: build-auth load-auth
 deploy-auth:
     @echo "=== Deploying auth service ==="
     kubectl apply -k k8s/overlays/dev
-    kubectl rollout restart deployment auth
-    kubectl rollout status deployment auth --timeout=120s
+    kubectl rollout restart deployment auth -n upgo
+    kubectl rollout status deployment auth -n upgo --timeout=120s
 
 # 构建 + 加载 + 部署 Auth 服务（全自动）
 deploy-auth-full: build-auth-full deploy-auth
@@ -165,7 +170,7 @@ dagger-ci-go:
 # 完整部署流程：缓存镜像 → 部署基础设施 → 构建服务 → 部署服务
 deploy-all: infra-cache k8s-up build-auth-full deploy-auth
     @echo "=== All services deployed ==="
-    kubectl get pods
+    kubectl get pods -n upgo
 
 # 完整 CI 流程：启动集群 → 运行测试 → 清理
 ci: k8s-up
@@ -177,13 +182,13 @@ ci: k8s-up
 # 完整部署后验证
 verify:
     @echo "=== Pod Status ==="
-    kubectl get pods
+    kubectl get pods -n upgo
     @echo ""
     @echo "=== Service Endpoints ==="
-    kubectl get endpoints
+    kubectl get endpoints -n upgo
     @echo ""
     @echo "=== Auth Health Check ==="
-    -kubectl port-forward svc/auth 9090:9090 &
+    -kubectl port-forward -n upgo svc/auth 9090:9090 &
     @sleep 2
     -curl -s http://localhost:9090/health && echo "" || echo "⚠️  Health check failed"
     @-kill %1 2>/dev/null
