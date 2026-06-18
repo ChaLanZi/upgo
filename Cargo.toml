@@ -4,6 +4,7 @@ members = [
     "contracts",
     "services/account",
     "services/auth",
+    "frontend/auth",
 ]
 
 [workspace.package]

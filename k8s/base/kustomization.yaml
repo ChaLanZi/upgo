@@ -24,3 +24,5 @@ resources:
   - auth-service.yaml
   - auth-config.yaml
   - auth-secret.yaml
+  - frontend-deployment.yaml
+  - frontend-service.yaml

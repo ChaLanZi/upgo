@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::rc::Rc;
+use gloo_storage::Storage;
 
 const ACCESS_TOKEN_KEY: &str = "upgo_access_token";
 const REFRESH_TOKEN_KEY: &str = "upgo_refresh_token";

@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use gloo_storage::Storage;
 
 /// Auth API client for communicating with the auth service.
 /// Platform-agnostic: uses reqwest on native and gloo-net on WASM.
