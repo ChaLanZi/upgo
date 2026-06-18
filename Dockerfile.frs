@@ -1,12 +1,15 @@
-# ── Optimized multi-stage build for FRS ────────────────
+# ── Multi-stage build for FRS (slim runtime) ──────────
 FROM rust:slim AS builder
 
-RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    pkg-config libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY lib/telemetry/Cargo.toml lib/telemetry/Cargo.toml
 COPY services/frs/Cargo.toml services/frs/Cargo.toml
+
 RUN mkdir -p services/frs/src lib/telemetry/src && \
     echo "fn main() {}" > services/frs/src/main.rs && \
     echo "" > lib/telemetry/src/lib.rs && \
@@ -15,13 +18,14 @@ RUN mkdir -p services/frs/src lib/telemetry/src && \
 COPY . .
 RUN cargo build --release -p frs
 
-# ── Runtime (use same base image for glibc match) ─────
-FROM rust:slim
+# ── Runtime (trixie has glibc 2.41, compatible with builder) ─
+FROM debian:trixie-slim
 
-RUN apt-get update && apt-get install -y ca-certificates tzdata && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates tzdata \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/target/release/frs /usr/local/bin/frs
 
 EXPOSE 50054 9094
-
 ENTRYPOINT ["frs"]
