@@ -30,3 +30,5 @@ resources:
   - minio-service.yaml
   - frs-deployment.yaml
   - frs-service.yaml
+  - config-mgr-deployment.yaml
+  - config-mgr-service.yaml

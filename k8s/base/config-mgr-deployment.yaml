@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: config-mgr
+  labels:
+    app: config-mgr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: config-mgr
+  template:
+    metadata:
+      labels:
+        app: config-mgr
+    spec:
+      containers:
+        - name: config-mgr
+          image: upgo-config-mgr:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9095
+              name: http
+          env:
+            - name: HTTP_ADDR
+              value: "0.0.0.0:9095"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: RNACOS_ADDR
+              value: "http://rnacos:8848"
+            - name: RNACOS_NAMESPACE
+              value: "public"
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "50m"
+            limits:
+              memory: "64Mi"
+              cpu: "100m"
+          livenessProbe:
+            httpGet:
+              path: /api/config/list/DEFAULT_GROUP
+              port: 9095
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /api/config/list/DEFAULT_GROUP
+              port: 9095
+            initialDelaySeconds: 10
+            periodSeconds: 10

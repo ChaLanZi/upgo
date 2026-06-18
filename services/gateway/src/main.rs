@@ -39,17 +39,23 @@ async fn main() -> Result<()> {
         std::env::var("FILES_BACKEND")
             .unwrap_or_else(|_| "http://frs.upgo.svc.cluster.local:9094".to_string()),
     );
+    let config_backend = Arc::new(
+        std::env::var("CONFIG_BACKEND")
+            .unwrap_or_else(|_| "http://config-mgr.upgo.svc.cluster.local:9095".to_string()),
+    );
     let listen_addr = std::env::var("LISTEN_ADDR").unwrap_or_else(|_| "0.0.0.0:80".to_string());
 
     tracing::info!("Gateway starting on {}", listen_addr);
     tracing::info!("Auth backend: {}", auth_backend);
     tracing::info!("Files backend: {}", files_backend);
+    tracing::info!("Config backend: {}", config_backend);
 
     let app = Router::new()
         .fallback(any(move |req: Request<Body>| {
             let auth = auth_backend.clone();
             let files = files_backend.clone();
-            async move { root_handler(req, auth, files).await }
+            let config = config_backend.clone();
+            async move { root_handler(req, auth, files, config).await }
         }))
         .layer(CorsLayer::permissive());
 
@@ -63,6 +69,7 @@ async fn root_handler(
     req: Request<Body>,
     auth_backend: Arc<String>,
     files_backend: Arc<String>,
+    config_backend: Arc<String>,
 ) -> Response<Body> {
     let path = req.uri().path().to_string();
 
@@ -70,6 +77,8 @@ async fn root_handler(
         proxy::api_proxy(req, &auth_backend).await
     } else if path.starts_with("/api/files/") {
         proxy::api_proxy(req, &files_backend).await
+    } else if path.starts_with("/api/config/") {
+        proxy::api_proxy(req, &config_backend).await
     } else if path.starts_with("/api/") {
         // fallback for any /api/* routes not matched above
         proxy::api_proxy(req, &auth_backend).await
