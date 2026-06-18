@@ -32,3 +32,5 @@ resources:
   - frs-service.yaml
   - config-mgr-deployment.yaml
   - config-mgr-service.yaml
+  - clickhouse-statefulset.yaml
+  - clickhouse-service.yaml

@@ -32,11 +32,11 @@ spec:
               value: "public"
           resources:
             requests:
-              memory: "96Mi"
-              cpu: "100m"
-            limits:
               memory: "256Mi"
               cpu: "300m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
           livenessProbe:
             httpGet:
               path: /api/config/list/DEFAULT_GROUP

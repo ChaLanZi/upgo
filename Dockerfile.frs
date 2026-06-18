@@ -1,15 +1,22 @@
-# ── Multi-stage build for FRS ─────────────────────────
+# ── Optimized multi-stage build for FRS ────────────────
 FROM rust:slim AS builder
 
 RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY . .
+COPY Cargo.toml Cargo.lock ./
+COPY lib/telemetry/Cargo.toml lib/telemetry/Cargo.toml
+COPY services/frs/Cargo.toml services/frs/Cargo.toml
+RUN mkdir -p services/frs/src lib/telemetry/src && \
+    echo "fn main() {}" > services/frs/src/main.rs && \
+    echo "" > lib/telemetry/src/lib.rs && \
+    cargo build --release -p frs 2>/dev/null || true
 
+COPY . .
 RUN cargo build --release -p frs
 
-# ── Runtime (trixie = testing, has newer glibc) ────────
-FROM debian:trixie-slim
+# ── Runtime (use same base image for glibc match) ─────
+FROM rust:slim
 
 RUN apt-get update && apt-get install -y ca-certificates tzdata && rm -rf /var/lib/apt/lists/*
 

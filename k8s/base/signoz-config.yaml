@@ -20,36 +20,19 @@ data:
         send_batch_size: 100
 
     exporters:
-      # Debug: log all received data
       logging:
-        loglevel: debug
-
-      # SigNoz: export traces and metrics to ClickHouse
-      clickhousetraces:
-        datasource: tcp://clickhouse:9000/signoz_traces
-        timeout: 5s
-        sending_queue:
-          queue_size: 1000
-        retry_on_failure:
-          enabled: true
-          max_elapsed_time: 60s
-
-      clickhousemetricswrite:
-        endpoint: tcp://clickhouse:9000
-        database: signoz_metrics
-        resource_to_telemetry_conversion:
-          enabled: true
+        verbosity: detailed
 
     service:
       pipelines:
         traces:
           receivers: [otlp]
           processors: [batch]
-          exporters: [logging, clickhousetraces]
+          exporters: [logging]
         metrics:
           receivers: [otlp]
           processors: [batch]
-          exporters: [logging, clickhousemetricswrite]
+          exporters: [logging]
       extensions:
         - health_check
 
