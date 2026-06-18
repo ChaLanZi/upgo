@@ -1,7 +1,7 @@
 target/
 .git/
 node_modules/
-frontend/
 ci/
 doc/
 k8s/
+migrations/
