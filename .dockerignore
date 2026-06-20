@@ -5,3 +5,4 @@ ci/
 doc/
 k8s/
 migrations/
+frontend/web/node_modules/

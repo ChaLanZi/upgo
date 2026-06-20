@@ -1,5 +1,4 @@
 use dioxus::prelude::*;
-
 use reqwest::Client;
 
 #[component]
@@ -32,19 +31,23 @@ pub fn FileManager() -> Element {
     };
 
     rsx! {
-        div { class: "files-container",
-            h2 { "File Manager" }
-            button { onclick: refresh, "Refresh" }
-            if !status().is_empty() { div { "{status}" } }
-            div { class: "file-list",
+        div { class: "p-6 max-w-3xl mx-auto",
+            div { class: "flex items-center justify-between mb-4",
+                h2 { class: "text-xl font-semibold text-gray-800", "File Manager" }
+                button { class: "px-4 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors", onclick: refresh, "Refresh" }
+            }
+            if !status().is_empty() {
+                div { class: "mb-4 px-4 py-3 bg-blue-50 text-blue-700 rounded-lg text-sm", "{status}" }
+            }
+            div { class: "space-y-2",
                 for f in files() {
-                    div { class: "file-item",
-                        span { "{f}" }
-                        a { href: "/api/files/download/{f}", "Download" }
+                    div { class: "flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-gray-100 shadow-sm",
+                        span { class: "text-sm text-gray-700 font-mono", "{f}" }
+                        a { class: "text-xs text-blue-500 hover:text-blue-700", href: "/api/files/download/{f}", "Download" }
                     }
                 }
                 if files().is_empty() {
-                    p { "No files." }
+                    div { class: "text-center py-12 text-gray-400", "No files found. Click Refresh to load." }
                 }
             }
         }
