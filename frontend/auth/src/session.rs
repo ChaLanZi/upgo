@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::path::PathBuf;
 use std::rc::Rc;
 
 const ACCESS_TOKEN_KEY: &str = "upgo_access_token";
@@ -18,8 +17,9 @@ pub enum AuthState {
     },
 }
 
-/// Manages authentication state and token lifecycle.
-/// Uses local file-based storage for Desktop.
+/// Cross-platform session manager.
+/// - Web: uses browser localStorage via gloo-storage
+/// - Desktop: uses filesystem via dirs crate
 #[derive(Clone)]
 pub struct SessionManager {
     state: Rc<RefCell<AuthState>>,
@@ -61,33 +61,45 @@ impl SessionManager {
         *self.state.borrow_mut() = AuthState::Unauthenticated;
     }
 
-    // ── File-based storage helpers ─────────────────────
-    fn storage_dir() -> PathBuf {
-        let mut dir = dirs::config_dir().unwrap_or_else(|| PathBuf::from("."));
+    // ── Platform-specific storage ──────────────────────
+    #[cfg(target_arch = "wasm32")]
+    fn get_stored(key: &str) -> Option<String> {
+        use gloo_storage::Storage;
+        gloo_storage::LocalStorage::get(key).ok()
+    }
+    #[cfg(target_arch = "wasm32")]
+    fn set_stored(key: &str, value: &str) {
+        use gloo_storage::Storage;
+        let _ = gloo_storage::LocalStorage::set(key, value);
+    }
+    #[cfg(target_arch = "wasm32")]
+    fn remove_stored(key: &str) {
+        use gloo_storage::Storage;
+        let _ = gloo_storage::LocalStorage::delete(key);
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn get_stored(key: &str) -> Option<String> {
+        let path = Self::storage_dir().join(key);
+        std::fs::read_to_string(path).ok()
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    fn set_stored(key: &str, value: &str) {
+        let path = Self::storage_dir().join(key);
+        let _ = std::fs::write(path, value);
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    fn remove_stored(key: &str) {
+        let path = Self::storage_dir().join(key);
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn storage_dir() -> std::path::PathBuf {
+        let mut dir = dirs::config_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
         dir.push("upgo");
         let _ = std::fs::create_dir_all(&dir);
         dir
-    }
-
-    fn file_path(key: &str) -> PathBuf {
-        let mut path = Self::storage_dir();
-        path.push(key);
-        path
-    }
-
-    fn get_stored(key: &str) -> Option<String> {
-        let path = Self::file_path(key);
-        std::fs::read_to_string(path).ok()
-    }
-
-    fn set_stored(key: &str, value: &str) {
-        let path = Self::file_path(key);
-        let _ = std::fs::write(path, value);
-    }
-
-    fn remove_stored(key: &str) {
-        let path = Self::file_path(key);
-        let _ = std::fs::remove_file(path);
     }
 }
 

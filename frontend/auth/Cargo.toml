@@ -4,14 +4,30 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[package.metadata.wasm-pack]
+wasm-opt = false
+
+# ── Desktop binary ──────────────────────────────────────
 [[bin]]
 name = "frontend-auth"
-path = "src/main.rs"
+path = "src/bin/desktop.rs"
+required-features = ["desktop"]
+
+# ── Web (WASM) binary ──────────────────────────────────
+[[bin]]
+name = "frontend-auth-web"
+path = "src/bin/web.rs"
+required-features = ["web"]
 
 [lib]
 name = "frontend_auth"
 path = "src/lib.rs"
-crate-type = ["lib"]
+crate-type = ["lib", "cdylib"]
+
+[features]
+default = ["desktop"]
+desktop = ["dioxus/desktop"]
+web = ["dioxus/web"]
 
 [dependencies]
 serde.workspace = true
@@ -19,5 +35,8 @@ serde_json.workspace = true
 chrono.workspace = true
 log = "0.4"
 reqwest = { version = "0.12", features = ["json"] }
-dioxus = { version = "0.6", features = ["desktop"] }
+dioxus = "0.6"
+wasm-bindgen = "0.2"
+wasm-logger = "0.2"
 dirs = "6"
+gloo-storage = "0.3"

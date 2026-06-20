@@ -1,4 +1,4 @@
-//! Dioxus UI components for upgo frontend.
+//! Dioxus UI components.
 
 pub mod app;
 pub mod files;
